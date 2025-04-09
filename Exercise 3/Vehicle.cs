@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Exercise_3;
 
-internal class Vehicle
+internal abstract class Vehicle
 {
     private string brand;
     private string model;
@@ -62,6 +62,9 @@ internal class Vehicle
         Year = year;
         Weight = weight;
     }
+
+    public abstract void StartEngine();
+    public abstract string Stats();   
 
     public override string ToString()
     {
