@@ -55,6 +55,14 @@ internal abstract class Vehicle
         }
     }
 
+    public Vehicle()
+    {
+        Brand = "Unknown";
+        Model = "Unknown";
+        Year = 1886;
+        Weight = 0;
+    }
+
     public Vehicle(string brand, string model, int year, double weight)
     {
         Brand = brand;
@@ -69,6 +77,18 @@ internal abstract class Vehicle
     public override string ToString()
     {
         return $"{Brand} {Model} {Year}, {Weight} kg";
+    }
+
+    public virtual void GatherInfo()
+    {
+        Console.Write("Enter brand: ");
+        Brand = Console.ReadLine();
+        Console.Write("Enter model: ");
+        Model = Console.ReadLine();
+        Console.Write("Enter year: ");
+        Year = int.Parse(Console.ReadLine());
+        Console.Write("Enter weight: ");
+        Weight = double.Parse(Console.ReadLine());
     }
 }
 

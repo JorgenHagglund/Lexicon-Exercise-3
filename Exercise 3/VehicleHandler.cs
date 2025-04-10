@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Exercise_3.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,7 @@ namespace Exercise_3
 
         public void AddVehicle(string brand, string model, int year, double weight)
         {
-            pool.Add(new Vehicle(brand, model, year, weight));
+            pool.Add(new Car(brand, model, year, weight));
         }
 
         public void ModifyVehicle(int index, string brand, string model, int year, double weight)
@@ -29,7 +30,7 @@ namespace Exercise_3
             pool[index].Weight = weight;
         }
 
-        public void ListVehicles()
+        private void ListVehicles()
         {
             for (int i = 0; i < pool.Count; i++)
             {
@@ -37,15 +38,42 @@ namespace Exercise_3
             }
         }
 
+        private void ListVehicleStats()
+        {
+            foreach (var vehicle in pool)
+            {
+                Console.WriteLine(vehicle.Stats());
+                vehicle.StartEngine();
+                if (vehicle is ICleanable)
+                {
+                    (vehicle as ICleanable)?.Clean();
+                }
+            }
+        }
+
         public void OpenForBusiness()
         {
+            // Get the types of vehicles there are
+            // This snippet is borrowed from Stack Overflow.
+            var vehicleTypes = AppDomain.CurrentDomain.GetAssemblies()
+                // alternative: .GetExportedTypes()
+                .SelectMany(domainAssembly => domainAssembly.GetTypes())
+                .Where(type => type.IsSubclassOf(typeof(Vehicle)) 
+                // alternative: => typeof(Vehicle).IsAssignableFrom(type)
+                // alternative: => type.IsSubclassOf(typeof(B))
+                // alternative: && type != typeof(B)
+                // alternative: && ! type.IsAbstract
+                ).ToArray();
+
             Console.WriteLine("Welcome to the Vehicle Handler!");
             Console.WriteLine("We are now open for business.");
             try
             {
-                // Simulate some operations
+                // Simulate some operations, Car is default
                 AddVehicle("Toyota", "Corolla", 2020, 1500);
                 AddVehicle("Honda", "Civic", 2019, 1400);
+                var eScooter = new ElectricScooter("Xiaomi", "M365", 2021, 125, 25);
+                AddVehicle(eScooter);   
 
                 // Create some errors
                 List<SystemError> errors = new List<SystemError>
@@ -57,31 +85,30 @@ namespace Exercise_3
 
                 while (true)
                 {
-                    ShowMainMenu();
-                    ConsoleKeyInfo ki = Console.ReadKey();
-                    Console.WriteLine();
-                    switch (ki.KeyChar)
+                    char choise = ShowMainMenu();
+                    switch (choise)
                     {
                         case '0':
                             Console.WriteLine("Exiting...");
                             return;
                         case '1':
                             Console.WriteLine("Adding a new vehicle...");
-                            Console.Write("Enter brand: ");
-                            string brand = Console.ReadLine();
-                            Console.Write("Enter model: ");
-                            string model = Console.ReadLine();
-                            Console.Write("Enter year: ");
-                            int year = int.Parse(Console.ReadLine());
-                            Console.Write("Enter weight: ");
-                            double weight = double.Parse(Console.ReadLine());
-                            AddVehicle(brand, model, year, weight);
+                            Vehicle? vehicle = ShowVehicleMenu(vehicleTypes);
+                            if (vehicle != null)
+                            {
+                                vehicle.GatherInfo();
+                                AddVehicle(vehicle);
+                            }
                             break;
                         case '2':
                             Console.WriteLine("Listing all vehicles...");
                             ListVehicles();
                             break;
                         case '3':
+                            Console.WriteLine("Listing vehicle stats...");
+                            ListVehicleStats();
+                            break;
+                        case '4':
                             Console.WriteLine("Available system errors...");
                             foreach (var error in errors)
                                 Console.WriteLine(error.ErrorMessage());
@@ -103,14 +130,54 @@ namespace Exercise_3
             }
         }
 
-        private void ShowMainMenu()
+        private char GetUserChoise(int max, string prompt)
+        {
+            int choise;
+            do
+            {
+                Console.Write($"{prompt}: ");
+                ConsoleKeyInfo ki = Console.ReadKey();
+                if (int.TryParse("" + ki.KeyChar, out choise) && choise >= 0 && choise <= max)
+                {
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.Beep();
+                    choise = -1;
+                    continue;
+                }
+            } while (choise < 0 || choise > max);
+            return choise.ToString().First();
+        }
+
+        private Vehicle? ShowVehicleMenu(Type[] vehicleTypes)
+        {
+            char choise;
+            do
+            {
+                int i = 1;
+                foreach (var type in vehicleTypes)
+                {
+                    Console.WriteLine($"{i++}: {type.Name}");
+                }
+                Console.WriteLine("0: Back to main menu");
+                choise = GetUserChoise(vehicleTypes.Length, "Select a vehicle type");
+                if (choise == '0')
+                    return null;
+                return (Vehicle?)Activator.CreateInstance(vehicleTypes[choise - '1']);
+            } while (choise != '0'); 
+        }
+
+        private char ShowMainMenu()
         {
             Console.WriteLine("Main Menu:");
             Console.WriteLine("1: Add Vehicle");
             Console.WriteLine("2: List Vehicles");
-            Console.WriteLine("3: List Availabe errors");
+            Console.WriteLine("3: List Vehicle's stats");   
+            Console.WriteLine("4: List Availabe errors");
             Console.WriteLine("0: Exit");
-            Console.Write("Select an option: ");
+            return GetUserChoise(4, "Select an option");
         }
     }
 }
