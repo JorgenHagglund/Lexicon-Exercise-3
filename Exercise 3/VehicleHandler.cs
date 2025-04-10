@@ -1,12 +1,16 @@
 ﻿using Exercise_3.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Exercise_3
 {
+    // Svar på frågorna i del 5:
+    // ===================================
+    // 1: Att försöka lägga till en Car till List<Motorcycle> kommer generera ett kompileringsfel
+    //      p.g.a. olika typer
+    // 2: För att kunna lägga till alla fordonstyper, fungerar min 'pool' (List<Vehicle>) väldigt bra.
+    // 3: Nej, för List innehåller en Clear(), men ingen Clean(). Däremot kan jag använda Clean() på varje
+    //      fordon i listan som implementerar ICleanable.
+    // 4: För att det är ett tvingande "kontrakt". Implementerande klasser måste implementera
+    //      interfacets egenskaper (properties), metoder och händelser (events).
     internal class VehicleHandler
     {
         List<Vehicle> pool = new();
